@@ -92,7 +92,7 @@ async function setupWebcam() {
    * Loads mobilenet from URL and keeps a reference to it in the object.
    */
   async function loadModel() {
-    console.log('Loading model...');
+    console.log('Loading model....');
     const startTime = performance.now();
     try {
       net =
