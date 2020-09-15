@@ -4,8 +4,8 @@ import numpy as np
 A = np.matrix([[0.0,3.0,-1.0,8.0],[-1.0,11.0,-1.0,3.0],[2.0,-1.0,10.0,-1.0],[10.0,-1.0,2.0,0.0]])
 b = np.array([15.0,25.0,-11.0,6.0])
 
-debug = False
-#debug = True
+#debug = False
+debug = True
 
 
 """
@@ -38,7 +38,7 @@ def is_strictly_diagonally_dominant_np(A):
   piv: Pivote 
 
 """
-def pivot_matrix_1(A):
+def pivot_matrix(A):
     n = A.shape[0] # Get shape of matrix in this case 4 
     piv = np.arange(0,n) # piv array index [0 1 2 3]  
     if(debug): print("Pivoting matrix: A")
@@ -81,11 +81,13 @@ def doolittle(A):
         
   for z in range(n):
     L[z, z] = 1 # Diagonal elements are all ones for Lower trangular matrix
-    U[z, z] = (A[z, z] - np.dot(L[z, :z], U[:z, z]))
+    U[z, z] = (A[z, z] - np.dot(L[z, :z], U[:z, z])) # For taking care of first eliment in diagonal order 
 
+    # Since first element is already taken care of start with z+1 row and z+1 col.
     for i in range(z+1, n):
       # Algebraically, the dot product is the sum of the products of the corresponding entries of the two sequences of numbers
       # https://www.geeksforgeeks.org/doolittle-algorithm-lu-decomposition/?ref=lbp
+      # Now take care of U element starting second col toward end of the matrix in the row.
       U[z, i] = (A[z, i] - np.dot(L[z, :z], U[:z, i]))
       if(debug): print("----------------------------")  
       if(debug): print("in U loop i:", i , " z:", z)
@@ -95,6 +97,7 @@ def doolittle(A):
       
     if(debug): print("----------------------------------------------")
     for k in range(z+1, n):
+      # Now take care of L elements starting second row towards bottom of the matrix 
       L[k, z] = (A[k, z] - np.dot(L[k, :z], U[:z, z])) / U[z, z]
       if(debug): print("----------------------------")    
       if(debug): print("in L loop k:", k , " z:", z)
@@ -105,7 +108,7 @@ def doolittle(A):
   return (L, U)
 
 
-def crout(A):
+def crout_1(A):
     """
     Returns the lower-triangular matrix L and the unit upper-triangular
     matrix U such that L*U = the given matrix A.
@@ -136,7 +139,7 @@ def crout(A):
     return [L, U]
 
 
-def crout_1(A):
+def crout(A):
     """
     Returns the lower-triangular matrix L and the unit upper-triangular
     matrix U such that L*U = the given matrix A.
@@ -161,13 +164,13 @@ def crout_1(A):
 
             # Declaring a temporary L to store values and insert them later in the L matrix
 
-            temporary_L = float(A[j,z])
+            temporary_L = float(A[j,z]) # 1. Take A[j,z]
             
             for k in range(z):
                 
-                temporary_L -= L[j,k]*U[k,z]
+                temporary_L -= L[j,k]*U[k,z] # 2. Keep subtracting L[j,k]*U[k,z] 
                 
-            L[j,z] = temporary_L
+            L[j,z] = temporary_L # 3. Assign to L[j,z]
             
         # for-loop starting at U[j][j+1] in order to solve the j-th row of U
         
@@ -175,15 +178,14 @@ def crout_1(A):
             
             # Declaring a temporary U to store values and insert them later in the U matrix
             
-            temporary_U = float(A[z,j])
+            temporary_U = float(A[z,j]) # 1. Take A[z,j]
             
             for k in range(z):
                 
-                temporary_U -= L[z,k]*U[k,j]
+                temporary_U -= L[z,k]*U[k,j] # 2. Keep subtracting L[z,k]*U[k,j] 
                 
-            U[z,j] = temporary_U / L[z,z]
+            U[z,j] = temporary_U / L[z,z] # 3. Assign to  U[z,j]
     
-    # Returning the matrices L and U i.e. the A matrix decomposed using Crout's algorithm
     
     return (L, U)
 
@@ -227,15 +229,15 @@ print("")
 print("Make the Matrix diagonally dominant")
 print("--------------------------------------------")
 #Pivot to get diogonially dominant matrix 
-A, piv = pivot_matrix_1(A) 
+A, piv = pivot_matrix(A) 
 b = b[piv]
 print(A)
 print("--------------------------------------------")
 
 # For Doolittle 
-print("Using Doolittle's algorithm:" + "\n")
-print("------------------------------------------------")
-print( "x = " + str(solveusing(doolittle,A,b)) + "\n" )
+#print("Using Doolittle's algorithm:" + "\n")
+#print("------------------------------------------------")
+#print( "x = " + str(solveusing(doolittle,A,b)) + "\n" )
 
 # For Crout 
 print("\n" + "Using Crout's algorithm:" + "\n")
