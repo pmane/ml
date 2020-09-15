@@ -1,0 +1,139 @@
+import numpy as np
+import time
+
+debug = False
+#debug = True
+
+"""
+  Parameters
+  ----------
+  A  : Matrix to be pivoted 
+  
+  Returns
+  -------  
+  A  : Pivoted matrix 
+  piv: Pivote 
+
+"""
+def pivot_matrix(A):
+    n = A.shape[0] # Get shape of matrix in this case 4 
+    piv = np.arange(0,n) # piv array index [0 1 2 3]  
+    if(debug): print("Pivoting matrix: A")
+    if(debug): print(A)
+    if(debug): print("Setting intial piv array :")
+    if(debug): print(piv)
+    if(debug): print("----------------------------")
+    for k in range(n-1):
+        max_row_index = np.argmax(abs(A[k:n,k])) + k 
+        if(debug): print("Detected max row index at row #", max_row_index , "-> switching row #" , max_row_index , " with row #" , k  )
+        piv[[k,max_row_index]] = piv[[max_row_index,k]] 
+        A[[k,max_row_index]] = A[[max_row_index,k]]
+        if(debug): print(A)
+        if(debug): print(piv)
+    print (A)
+    return [A,piv]
+
+
+def infNorm(vector):
+    norm = vector[0]
+    for element in vector:
+        if norm < abs(element):
+            norm = abs(element)
+    return norm
+
+"""
+  Parameters
+  ----------
+  A  : list of list of floats : coefficient matrix A
+  b  : list of list of floats : coefficient matrix b
+  x  : list of floats : initial guess
+  w  : float : weight - extent to which relaxation needs to be done. For pure gaussSeidel w = 1.
+  tol: float : error tolerance
+  N  : int   : max iteration
+  
+  Returns
+  -------  
+  prints list of floats solution to the system of linear equation
+  
+  Raises
+  ------
+  ValueError
+      Solution does not converge
+""" 
+def gaussSeidel(A, b, x, w, N, tol):
+    tic=time.time()
+    maxIterations = 1000000
+    xprev = [0.0 for i in range(N)] # Previous guess
+    
+    for i in range(maxIterations): 
+        for j in range(N): # set current guess to previous guess
+            xprev[j] = x[j] 
+
+        for j in range(N):
+            summ = 0.0
+            for k in range(N):
+                if (k != j): # Get Sum of all terms except x1 in row 1 , x2 in row 2 ... by putting current guess starting with intial gues (0 or 1)
+                    summ = summ + A[j][k] * x[k] 
+            #x[j] = w*((b[j] - summ) / A[j][j]) + (1-w)*x[j] # Immdiatly replace the intial guess x[j] to be used in next iteration
+            x[j] = (w/A[j][j])*(b[j] - summ)  + (1-w)*x[j] # Immdiatly replace the intial guess x[j] to be used in next iteration 
+            if(debug): print(x)
+        
+        # since we can not use numpy.linalg.norm due to exam ristrictions 
+        #print("---norm" , np.linalg.norm(abs(x-xprev) ,np.inf)/np.linalg.norm(abs(xprev) ,np.inf))
+        if(i==0): 
+            norm = infNorm(x-xprev) 
+        else: 
+            norm =  infNorm(x-xprev)/infNorm(xprev)
+        
+        if (norm < tol) and i != 0:
+            print("Sequence converges to [", end="")
+            for j in range(N - 1):
+                print(x[j], ",", end="")
+            toc=time.time()
+            print(x[N - 1], "]. Took", i + 1, "iterations with convergence criteria using l infinity norm:" , norm, " time :" , (toc - tic))
+            return
+        else:
+            print("Sequence is convering to [", end="")
+            for j in range(N - 1):
+                print(x[j], ",", end="")
+            print(x[N - 1], "]. at", i + 1, "iterations with convergence criteria using l infinity norm:" , norm)
+
+    
+    raise ValueError('Solution does not converge')
+
+
+
+# Declaring the A and b 
+A = np.array([[0.0,3.0,-1.0,8.0],[-1.0,11.0,-1.0,3.0],[2.0,-1.0,10.0,-1.0],[10.0,-1.0,2.0,0.0]])
+b = np.array([15.0,25.0,-11.0,6.0])
+
+# Check if the matrix is square
+if A.shape[0] != A.shape[1]:
+    print('Input argument is not a square matrix.')
+    exit()
+
+print("")
+print("Make the Matrix diagonally dominant")
+print("--------------------------------------------")
+#Pivot to get diogonially dominant matrix 
+A, piv = pivot_matrix(A) 
+b = b[piv]
+print("--------------------------------------------")
+
+print("")
+print("Gauss Seidel with guess [0.0,0.0,0.0,0.0]")
+print("--------------------------------------------")
+guess0 = np.array([0.0,0.0,0.0,0.0])
+gaussSeidel(A, b, guess0, 1, 4, 0.0001) # gaussSeidel when w is 1
+
+print("")
+print("Gauss Seidel with guess [1.0,1.0,1.0,1.0]")
+print("--------------------------------------------")
+guess1 = np.array([1.0,1.0,1.0,1.0])
+gaussSeidel(A, b, guess1, 1, 4, 0.0001) # gaussSeidel when w is 1
+
+print("")
+print("Gauss Seidel with guess [0.0,0.0,0.0,0.0] + SOR with w 1.1")
+print("--------------------------------------------")
+guess0 = np.array([0.0,0.0,0.0,0.0])
+gaussSeidel(A, b, guess0, 1.1, 4, 0.0001) # gaussSeidel with SOR when w is greater than 1 
