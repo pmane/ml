@@ -1,3 +1,4 @@
+#https://scicomp.stackexchange.com/questions/10815/sort-of-problems-where-sor-is-faster-than-gauss-seidel
 import numpy as np
 
 # Declaring the A and b 
